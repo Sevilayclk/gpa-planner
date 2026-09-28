@@ -1,0 +1,34 @@
+name: Tests
+
+# Ne zaman çalışsın: her push'ta ve her pull request'te (kod birleştirme isteği)
+on: [push, pull_request]
+
+jobs:
+  test:
+    # Linux sanal makinede çalışsın (Windows'tan farklı bir ortam -> daha güçlü kanıt)
+    runs-on: ubuntu-latest
+
+    # Matrix: testler iki Python sürümünde ayrı ayrı koşar
+    # -> compatibility testing (uyumluluk testi)
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      # Checkout: repo kodunu makineye indir
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Setup-python: istenen Python sürümünü kur
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Bağımlılıkları kur (requirements.txt'nin gerçek sınavı)
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Testleri çalıştır; bir test bile fail olursa iş kırmızı olur
+      - name: Run tests with coverage
+        run: pytest --cov=gpa_planner --cov-branch --cov-report=term-missing
